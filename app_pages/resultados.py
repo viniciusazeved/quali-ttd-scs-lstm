@@ -103,6 +103,43 @@ with tab_heat:
 
 with tab_trade:
     st.subheader("Trade-off — previsão 6h × simulação contínua")
+
+    with st.expander("🤔 O que é *trade-off*?"):
+        st.markdown(
+            """
+            **Trade-off** (em português: **compromisso**) é quando **melhorar
+            uma coisa piora outra**. Não dá pra ter as duas no máximo ao
+            mesmo tempo — você escolhe onde quer ganhar e onde aceita perder.
+
+            **Exemplos do dia a dia:**
+            - **Carro:** quanto mais rápido, menos econômico
+            - **Celular:** bateria maior = aparelho mais grosso
+            - **Dieta:** comida mais saudável → geralmente menos saborosa
+
+            **Em modelagem hidrológica (aqui):** quanto mais o modelo
+            **otimiza a previsão de curto prazo** (horizonte 6 h),
+            **pior ele fica na simulação contínua** de 9 meses — e
+            vice-versa. Não dá pra ter os dois no máximo com o mesmo
+            modelo.
+
+            **Por que isso acontece?**
+            - Parâmetros **ajustáveis** aprendem a "decorar" bem os
+              padrões de curto prazo → ótimo para prever 6 h à frente,
+              mas acumula erro quando roda por meses sem reset
+            - Parâmetros **fixos** (valores clássicos da hidrologia)
+              atuam como "âncoras físicas" → previsão pontual não é
+              tão refinada, mas a simulação longa fica estável
+
+            **Implicação prática:** a escolha entre "ajustáveis" ou
+            "fixos" **não é questão técnica** — depende da aplicação:
+            se você vai usar pra **alerta de cheias** (curto prazo),
+            prefere ajustáveis. Se vai usar pra **gestão de recursos
+            hídricos** (simulação longa), prefere fixos. Se quer
+            **funcionar razoavelmente nos dois**, o `LSTM_TTD_Manning`
+            é a melhor escolha.
+            """
+        )
+
     st.plotly_chart(plot_tradeoff(ablation, continuous), use_container_width=True)
 
     st.markdown(

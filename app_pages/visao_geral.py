@@ -157,7 +157,7 @@ with col2:
           concentrado (*lumped* = tratar a bacia como uma "caixa única")
         - **Parâmetros aprendíveis** dominam em previsão de curto prazo (6h)
         - **Parâmetros fixos** dominam em simulação contínua →
-          surge um **compromisso** (*trade-off*)
+          surge um **compromisso** (*trade-off*) — melhorar um **piora** o outro
 
         A caracterização desse compromisso **não estava nas hipóteses
         originais** — é o achado mais expressivo da Fase 1 e motiva
