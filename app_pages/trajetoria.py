@@ -20,11 +20,11 @@ st.caption(
 # ---------------------------------------------------------------------------
 st.markdown(
     """
-    A arquitetura atual **não foi a primeira tentativa**. A pesquisa
-    amadureceu ao longo de dois anos num processo convergente de
-    simplificação — **trocar complexidade arquitetural por fundamentação
-    hidrológica**. A trajetória importa porque é o próprio argumento do
-    trabalho: a física certa vale mais que a rede neural mais elaborada.
+    A arquitetura atual **não foi a primeira tentativa**. Desde o início
+    do doutorado, em **março de 2024**, a pesquisa passou por um ciclo
+    de experimentação → diagnóstico → simplificação. A trajetória importa
+    porque é o próprio argumento do trabalho: **a física certa vale mais
+    que a rede neural mais elaborada**.
     """
 )
 
@@ -237,22 +237,50 @@ st.divider()
 st.subheader("Linha do tempo")
 
 timeline = [
-    ("2023 · 1º sem", "Início do doutorado. Formulação do problema PUB como foco central."),
-    ("2023 · 2º sem", "Tensor Hydro v1 — PatchCNN + LSTM, escala diária."),
-    ("2024 · 1º sem", "Tensor Hydro v2 — adição de FiLM e encoder Transformer/Mamba."),
-    ("2024 · 2º sem", "Avaliação leave-one-station-out → degradação identificada."),
-    ("2025 · 1º sem", "Pivot: simplificação, escala horária, não autorregressivo."),
-    ("2025 · 2º sem", "Implementação TTD-SCS-LSTM + ablação dos 10 modelos."),
-    ("2026 · jan", "Treinamento final (300 épocas, SEED=42). NSE 0,84 / 0,82."),
-    ("2026 · 22/abr", "Defesa da qualificação."),
+    ("🎓 2024 · mar",
+     "**Início do doutorado.** Cumprimento de créditos e disciplinas "
+     "do programa. Formulação do problema PUB como foco central da "
+     "pesquisa."),
+    ("📚 2024 · 2º sem",
+     "Conclusão dos créditos e aprofundamento na literatura de "
+     "modelagem hidrológica com aprendizado profundo."),
+    ("🧪 2025 · 1º sem",
+     "**Tensor Hydro v1** — primeira arquitetura: PatchCNN + LSTM em "
+     "escala diária, com 689 ottobacias."),
+    ("🧪 2025 · 2º sem",
+     "**Tensor Hydro v2** — adição de FiLM e encoders alternativos "
+     "(Transformer, Mamba). **Avaliação leave-one-station-out revelou "
+     "a degradação** fora da estação de treino."),
+    ("🔄 2025 · fim/2026 · jan",
+     "**Pivot metodológico:** simplificação arquitetural, substituição "
+     "de módulos neurais por camadas físicas diferenciáveis, mudança "
+     "de escala (diária → horária) e de modo (autorregressivo → "
+     "não autorregressivo)."),
+    ("⚙️ 2026 · jan",
+     "Implementação e treinamento dos 10 modelos do **TTD-SCS-LSTM** "
+     "(300 épocas, SEED=42). Resultados finais: **NSE 0,84 em "
+     "previsão 6 h · NSE 0,82 em simulação contínua**."),
+    ("🎯 **2026 · 22/abr**",
+     "**Defesa da qualificação** (você está aqui)."),
+    ("🚀 2026 · mai–jun",
+     "**Fase 2 — Regionalização multi-bacia.** Treinamento em ~100 "
+     "bacias brasileiras + validação *leave-one-basin-out*. "
+     "Meta: primeiros resultados até o **meio de 2026**."),
+    ("📄 2026 · jun",
+     "Submissão do **Artigo 1** (metodologia e estudo comparativo)."),
+    ("📄 2027 · fev",
+     "Submissão do **Artigo 2** (regionalização)."),
+    ("🎓 2027 · fim / 2028 · 1º sem",
+     "Redação e defesa final da tese."),
 ]
 
 for data, evento in timeline:
     c1, c2 = st.columns([0.22, 0.78])
-    c1.markdown(f"**{data}**")
+    c1.markdown(data)
     c2.markdown(evento)
 
 st.caption(
-    "*As datas dos primeiros marcos são aproximadas — ilustram o "
-    "ritmo da maturação metodológica.*"
+    "*Os anos iniciais incluem o período de créditos (2024) antes da "
+    "pesquisa técnica começar. As datas futuras (pós-defesa) são "
+    "planejamento do cronograma detalhado na página **Fase 2**.*"
 )
