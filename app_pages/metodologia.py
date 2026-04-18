@@ -259,32 +259,145 @@ with tab_ttd:
         """
     )
 
-    st.markdown("#### Cálculo do $T_c$ — método de Maidment (1996)")
+    st.markdown("#### Como o raster de $T_c$ foi construído — do DEM ao tempo de viagem")
 
     st.markdown(
         r"""
-        O tempo de concentração é derivado de um **campo de velocidades
-        espacialmente distribuído**, com velocidade em cada pixel função
-        da declividade local e da área de drenagem acumulada:
+        Esse é um ponto que geralmente gera dúvida: **como se transforma
+        um modelo digital de terreno (DEM) em um raster de tempo de
+        concentração?** É uma cadeia de geoprocessamento sobre o DEM
+        **ANADEM 30 m**:
         """
     )
 
-    st.latex(r"V = V_m \cdot \frac{S^b \cdot A^c}{\overline{S^b \cdot A^c}}")
+    # --- Fluxograma visual
+    import plotly.graph_objects as go
 
+    steps = [
+        ("**DEM ANADEM**\n30 m, correção<br>de viés de vegetação", "#1e3a8a"),
+        ("**Fill**\nremove depressões<br>(correção hidrológica)", "#1e40af"),
+        ("**Slope + D8**\ndeclividade S (m/m)<br>+ direção de fluxo", "#1d4ed8"),
+        ("**Flow Accumulation**\nárea drenada A (km²)<br>em cada pixel", "#2563eb"),
+        ("**Campo de velocidades**\n$V = V_m \\cdot S^{0{,}5} \\cdot A^{0{,}5} / \\overline{S^{0{,}5}A^{0{,}5}}$", "#3b82f6"),
+        ("**Raster de peso**\n$1/V$ (tempo por metro)", "#60a5fa"),
+        ("**Downslope Flowpath**<br>**Length** (WhiteboxTools)<br>integra $\\sum L_j/V_j$<br>ao longo do caminho", "#93c5fd"),
+        ("**Raster de $T_c$ 30 m**<br>tempo de viagem<br>ao exutório em cada<br>pixel", "#16a34a"),
+        ("**Estatística zonal**<br>média dos $T_c$ dos<br>pixels dentro de cada<br>ottobacia", "#15803d"),
+        ("**$T_c$ por ottobacia**<br>245 valores — entra<br>como parâmetro do IUH", "#166534"),
+    ]
+
+    fig_flow = go.Figure()
+    n = len(steps)
+    for i, (label, color) in enumerate(steps):
+        row = i // 5
+        col = i % 5
+        if row == 1:
+            col = 4 - col  # inverter a segunda linha (serpentina)
+        x_c = col * 2.5
+        y_c = -row * 2.2
+        # caixinha (retângulo com cantos arredondados simulado com shape)
+        fig_flow.add_shape(
+            type="rect",
+            x0=x_c - 1.1, x1=x_c + 1.1,
+            y0=y_c - 0.7, y1=y_c + 0.7,
+            fillcolor=color, line=dict(color="white", width=2),
+            opacity=0.95,
+        )
+        fig_flow.add_annotation(
+            x=x_c, y=y_c, text=label.replace("\n", "<br>"),
+            showarrow=False,
+            font=dict(color="white", size=10),
+            align="center",
+        )
+
+    # Setas
+    arrow_style = dict(arrowhead=3, arrowsize=1.2, arrowwidth=2, arrowcolor="#64748b")
+    for i in range(n - 1):
+        row_i = i // 5
+        col_i = i % 5
+        if row_i == 1:
+            col_i = 4 - col_i
+        row_j = (i + 1) // 5
+        col_j = (i + 1) % 5
+        if row_j == 1:
+            col_j = 4 - col_j
+        x0, y0 = col_i * 2.5, -row_i * 2.2
+        x1, y1 = col_j * 2.5, -row_j * 2.2
+        if row_i == row_j:
+            # horizontal
+            fig_flow.add_annotation(
+                x=x1 - 1.1, y=y1, ax=x0 + 1.1, ay=y0,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True, **arrow_style,
+            )
+        else:
+            # descida vertical
+            fig_flow.add_annotation(
+                x=x1, y=y1 + 0.7, ax=x0, ay=y0 - 0.7,
+                xref="x", yref="y", axref="x", ayref="y",
+                showarrow=True, **arrow_style,
+            )
+
+    fig_flow.update_layout(
+        template="simple_white",
+        xaxis=dict(range=[-1.8, 11.8], visible=False),
+        yaxis=dict(range=[-3.5, 0.9], visible=False, scaleanchor="x"),
+        height=360,
+        margin=dict(l=10, r=10, t=10, b=10),
+        showlegend=False,
+    )
+    st.plotly_chart(fig_flow, use_container_width=True)
+
+    st.markdown(
+        r"""
+        **Detalhando cada etapa:**
+
+        1. **DEM ANADEM (30 m)** — modelo digital de terreno da IPH/UFRGS
+           + ANA com **correção do viés de vegetação** (redução de 85%
+           vs Copernicus GLO-30). Sem essa correção, áreas florestadas
+           teriam declividades erradas porque o MDE "enxergaria" a copa
+           das árvores em vez do solo.
+        2. **Fill** — remove depressões espúrias do DEM (artefatos de
+           interpolação ou ruído). É **correção hidrológica**: sem ela,
+           a água simulada fica presa em pits inexistentes.
+        3. **Slope + D8** — declividade $S$ (em m/m) e direção de fluxo
+           pelo algoritmo D8 (cada célula escoa para uma das 8 vizinhas
+           na direção da maior declividade).
+        4. **Flow Accumulation** — para cada pixel, conta-se quantos
+           pixels drenam para ele → dá a área contribuinte $A$ (em km²).
+        5. **Campo de velocidades** (Maidment 1996) — calcula-se $V$
+           pixel a pixel com a equação ao lado. Velocidades maiores
+           onde há mais área acumulada (rios) e maior declividade.
+        6. **Raster de peso** ($1/V$) — tempo por metro em cada pixel.
+        7. **Downslope Flowpath Length** — ferramenta do **WhiteboxTools**
+           que, para cada pixel, integra o peso $1/V$ ao longo do
+           caminho de fluxo até o exutório. Resultado: **raster de
+           tempo de viagem em 30 m**.
+        8. **Estatística zonal por ottobacia** — média dos tempos de
+           viagem dos pixels dentro de cada ottobacia → **um valor de
+           $T_c$ por ottobacia** (245 valores).
+        """
+    )
+
+    st.markdown(r"##### Equação do campo de velocidades")
+    st.latex(r"V = V_m \cdot \frac{S^b \cdot A^c}{\overline{S^b \cdot A^c}}")
     st.markdown(
         r"""
         com $b = c = 0{,}5$ (valores típicos reportados em Maidment, 1996).
-        O tempo de viagem de cada pixel é integrado ao longo do caminho
-        de fluxo via algoritmo D8 (WhiteboxTools):
+        A **raiz quadrada da declividade** ($S^{0{,}5}$) é consistente
+        com a equação de Manning; a **raiz quadrada da área acumulada**
+        ($A^{0{,}5}$) captura o aumento de vazão (e portanto velocidade)
+        à medida que o fluxo converge.
         """
     )
 
-    st.latex(r"T_c(i) = \sum_{j \in \text{caminho}(i)} \frac{L_j}{V_j}")
-
     st.markdown(
         r"""
-        **Ajuste pelo coeficiente de Manning** — o $T_c$ base pode ser
-        refinado pela rugosidade da superfície (derivada do LULC):
+        ##### Ajuste pelo coeficiente de Manning
+
+        O $T_c$ base usa **apenas topografia**. Para incorporar o efeito
+        da **rugosidade do uso do solo** (florestas desaceleram o fluxo
+        muito mais que pastagens), aplica-se um fator multiplicativo:
         """
     )
 
@@ -292,11 +405,61 @@ with tab_ttd:
 
     st.markdown(
         r"""
-        com $n_{\text{ref}} = 0{,}035$ (agropecuária). Exemplos:
-        floresta $n = 0{,}15$ ($\times 4{,}3$), urbano $n = 0{,}015$
-        ($\times 0{,}43$). Na bacia do rio Preto, o Manning eleva o $T_c$
-        médio de **9,5 h → 23,4 h** (+145%), refletindo a predominância
-        de cabeceiras florestadas na Serra da Mantiqueira.
+        com $n_{\text{ref}} = 0{,}035$ (agropecuária). Os valores vêm de
+        Chow (1959) e Engman (1986):
+        """
+    )
+
+    st.markdown(
+        """
+        | Classe | $n$ Manning | Fator $T_c$ |
+        |---|---|---|
+        | 🌳 Floresta | 0,150 | ×4,29 |
+        | 🌾 Vegetação natural | 0,100 | ×2,86 |
+        | 🚜 Agropecuária (referência) | 0,035 | ×1,00 |
+        | ⛰️ Solo exposto | 0,025 | ×0,71 |
+        | 💧 Água | 0,030 | ×0,86 |
+        | 🏙️ Urbano | 0,015 | ×0,43 |
+        """
+    )
+
+    st.info(
+        "**Efeito na bacia do rio Preto:** o Manning eleva o $T_c$ médio "
+        "de **9,5 h → 23,4 h (+145%)**, refletindo a predominância de "
+        "cabeceiras florestadas na Serra da Mantiqueira. Ou seja: o "
+        "Tc base topográfico **subestima** drasticamente o tempo real "
+        "de trânsito quando há cobertura vegetal densa."
+    )
+
+    # --- Por que ottobacia e não célula
+    st.markdown("##### Por que usamos ottobacia como unidade e não a célula de 30 m?")
+    st.markdown(
+        r"""
+        Uma pergunta natural: já que temos o raster de $T_c$ em 30 m,
+        por que agregar em ottobacias e perder resolução?
+
+        **Três razões complementares:**
+
+        1. **Resolução das forçantes.** A precipitação **MERGE/CPTEC**
+           tem resolução espacial de ~10 km (~123 km²/pixel) —
+           **muitíssimo maior que célula de 30 m**. Não faz sentido
+           trabalhar com discretização interna de 30 m quando a chuva
+           de entrada é uniforme em blocos de dezenas de quilômetros.
+           A ottobacia (12,7 km² em média) é **a unidade que casa com
+           a escala efetiva da precipitação**.
+        2. **Atributos já pré-agregados.** O **CN vem do produto
+           BHAE_CN-2022** da ANA **já agregado por ottobacia** — não
+           temos CN pixel a pixel (e nem faria sentido, já que o CN é
+           um parâmetro composto de solo + uso, não um valor local).
+        3. **Resultado de Maidment (1996).** O próprio autor demonstrou
+           que agrupar pixels em ~30 zonas produz IUHs **indistinguíveis**
+           dos obtidos célula-a-célula. Com 245 ottobacias, estamos
+           muito acima dessa garantia.
+
+        Ou seja: a ottobacia **não é uma perda de resolução** — é a
+        **unidade natural** dada a escala das entradas. Manter célula
+        de 30 m seria "resolução ilusória" (granularidade que não se
+        traduz em informação, só em custo computacional).
         """
     )
 
