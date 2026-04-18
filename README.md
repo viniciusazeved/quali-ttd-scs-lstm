@@ -3,6 +3,8 @@
 Aplicação Streamlit interativa para apoiar a defesa da qualificação de
 doutorado de **Vinícius de Azevedo Silva** (UNICAMP / FECFAU / DRH · LAPLA).
 
+🚀 **App no ar:** https://quali-ttd-scs-lstm.streamlit.app/
+
 **Orientador:** Prof. Hugo de Oliveira Fagundes
 **Coorientador:** Prof. Edevar Luvizotto Junior
 **Data da defesa:** 22 de abril de 2026
