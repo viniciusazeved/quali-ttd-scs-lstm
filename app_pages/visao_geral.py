@@ -20,12 +20,15 @@ st.markdown(
         <p style="font-size: 0.95rem; color: #64748b; margin: 0;">
             Qualificação de Doutorado · Engenharia Civil · Recursos Hídricos
         </p>
-        <h1 style="font-size: 2.4rem; margin: 0.6rem 0 0.6rem 0; line-height: 1.2;">
-            Modelo hidrológico diferenciável TTD-SCS-LSTM para previsão de vazão
+        <h1 style="font-size: 2.2rem; margin: 0.6rem 0 0.8rem 0; line-height: 1.25;">
+            Modelo Hidrológico Diferenciável para Previsão de Vazão
         </h1>
-        <p style="font-size: 1.15rem; color: #374151; margin: 0;">
-            Arquitetura híbrida <i>end-to-end</i> com parâmetros físicos aprendíveis
-            para previsão em bacias não monitoradas
+        <p style="font-size: 1.25rem; color: #1e293b; font-weight: 500; margin: 0 0 0.5rem 0;">
+            Integração de Hidrograma Unitário Distribuído, SCS-CN e LSTM
+        </p>
+        <p style="font-size: 1rem; color: #64748b; font-style: italic; margin: 0;">
+            Proposta metodológica e resultados da Fase 1 (bacia única) ·
+            extensão multi-bacia planejada para a Fase 2
         </p>
     </div>
     """,
@@ -39,24 +42,25 @@ with col_a:
         """
         #### Em três linhas
 
-        1. **Problema**: previsão de vazão em rios brasileiros é limitada
+        1. **Contexto**: previsão de vazão em rios brasileiros é limitada
            pelo monitoramento insuficiente (~2.000 estações para milhares
-           de bacias). É o clássico problema das **bacias sem monitoramento**
-           — na literatura internacional, *PUB — Prediction in Ungauged Basins*.
+           de bacias) — o clássico problema das **bacias sem monitoramento**
+           (*PUB — Prediction in Ungauged Basins*).
         2. **Proposta**: um modelo híbrido que combina **equações
            hidrológicas clássicas** com uma **rede neural**, treinados
            em conjunto (*ponta-a-ponta*, ou *end-to-end* no jargão). São
-           três módulos: **TTD** (propagação da água na bacia pelo método
-           de Maidment), **SCS-CN** (separação da chuva em escoamento) e
+           três módulos: **TTD** (propagação da água pelo método de
+           Maidment), **SCS-CN** (separação da chuva em escoamento) e
            uma **LSTM** (rede recorrente que corrige o que os módulos
            físicos simplificaram). O modelo **não usa vazão observada
            como entrada** — apenas chuva e atributos da bacia.
-        3. **Resultado (Fase 1)**: **NSE = 0,84** em previsão de 6 horas
-           à frente e **NSE = 0,82** em simulação contínua de 9 meses na
-           sub-bacia do rio Preto (Manuel Duarte, 3.117 km²). Os
-           parâmetros físicos aprendidos têm **interpretação hidrológica
-           clara**, o que viabiliza a extensão a bacias sem monitoramento
-           na Fase 2.
+        3. **Resultado da Fase 1 (bacia única)**: **NSE = 0,84** em
+           previsão de 6 horas à frente e **NSE = 0,82** em simulação
+           contínua de 9 meses na sub-bacia do rio Preto (Manuel Duarte,
+           3.117 km²). Os parâmetros físicos aprendidos convergem para
+           valores com **interpretação hidrológica clara** — um indício
+           favorável para a **Fase 2**, que vai **avaliar a generalização
+           espacial** para múltiplas bacias.
         """
     )
 
