@@ -1,0 +1,29 @@
+[project]
+name = "ttd-scs-lstm-apresentacao"
+version = "1.0.0"
+description = "Streamlit de apresentacao da qualificacao de doutorado - modelo TTD-SCS-LSTM"
+requires-python = ">=3.11"
+dependencies = [
+    "streamlit>=1.40",
+    "streamlit-folium>=0.27",
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "scipy>=1.11",
+    "plotly>=5.18",
+    "pydeck>=0.9",
+    "folium>=0.20",
+    "geopandas>=0.14",
+    "shapely>=2.0",
+    "pyproj>=3.6",
+    "fiona>=1.9",
+    "h5py>=3.10",
+    "requests>=2.31",
+    "pyarrow>=15",
+    "matplotlib>=3.10.8",
+]
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
