@@ -10,7 +10,6 @@ import streamlit as st
 
 import data_loader as dl
 from plots import (
-from embed_mode import maybe_hide_chrome
     COLORS,
     plot_availability_heatmap,
     plot_flow_duration_curve,
@@ -18,6 +17,7 @@ from embed_mode import maybe_hide_chrome
     plot_monthly_boxplot,
     plot_precip_timeseries,
 )
+from embed_mode import maybe_hide_chrome
 
 maybe_hide_chrome()
 

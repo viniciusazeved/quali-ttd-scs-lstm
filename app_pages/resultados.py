@@ -10,7 +10,6 @@ import streamlit as st
 
 import data_loader as dl
 from plots import (
-from embed_mode import maybe_hide_chrome
     COLORS,
     PALETTE,
     plot_hydrograph,
@@ -18,6 +17,7 @@ from embed_mode import maybe_hide_chrome
     plot_nse_ranking,
     plot_tradeoff,
 )
+from embed_mode import maybe_hide_chrome
 
 maybe_hide_chrome()
 

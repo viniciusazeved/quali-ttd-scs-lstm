@@ -10,10 +10,10 @@ from streamlit_folium import st_folium
 
 import data_loader as dl
 from plots import (
-from embed_mode import maybe_hide_chrome
     plot_ottobacia_attr_histogram,
     plot_ottobacia_scatter,
 )
+from embed_mode import maybe_hide_chrome
 
 maybe_hide_chrome()
 

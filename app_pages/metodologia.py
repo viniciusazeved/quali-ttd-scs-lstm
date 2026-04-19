@@ -10,6 +10,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from plots import plot_iuh
+from embed_mode import maybe_hide_chrome
 
 maybe_hide_chrome()
 
@@ -274,7 +275,6 @@ with tab_ttd:
 
     # --- Fluxograma visual
     import plotly.graph_objects as go
-from embed_mode import maybe_hide_chrome
 
     steps = [
         ("**DEM ANADEM**\n30 m, correção<br>de viés de vegetação", "#1e3a8a"),
