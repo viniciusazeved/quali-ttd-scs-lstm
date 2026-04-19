@@ -224,6 +224,86 @@ st.markdown(
 
 st.divider()
 
+# ---------------------------------------------------------------------------
+# Objetivos
+# ---------------------------------------------------------------------------
+st.subheader("Objetivos da pesquisa")
+
+st.markdown(
+    """
+    <div style="border-left: 4px solid #2563eb; padding: 10px 18px;
+                background: #eff6ff; border-radius: 4px; margin-bottom: 1rem;">
+    <b style="color:#1e3a8a;">Objetivo geral</b><br>
+    <span style="color:#1e293b;">
+    Desenvolver e validar uma arquitetura hidrológica diferenciável
+    para previsão de vazão em <b>escala horária</b>, integrando os módulos
+    <b>TTD</b>, <b>SCS-CN</b> e <b>LSTM</b>, capaz de gerar dois produtos:
+    (i) <b>simulação contínua</b> para gestão de recursos hídricos, e
+    (ii) <b>previsão de curto prazo</b> para sistemas de alerta —
+    ambos com parâmetros físicos aprendíveis e potencial de
+    generalização para <b>bacias não monitoradas</b>.
+    </span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+st.markdown("**Objetivos específicos**")
+
+o1, o2 = st.columns(2)
+
+with o1:
+    st.markdown(
+        """
+        ##### Fase 1 — bacia única (concluída)
+
+        1. **Formular** o módulo **TTD** diferenciável (método de Maidment)
+           com parâmetros de escala temporal (`tc_scale`) e dispersão (`σ`)
+           aprendíveis via *backpropagation*.
+
+        2. **Formular** o módulo **SCS-CN** diferenciável com coeficiente
+           de abstração inicial (`λ`) aprendível, usando o CN-2022 da ANA
+           como conhecimento prévio.
+
+        3. **Avaliar** previsão de curto prazo em **5 horizontes** (1h,
+           3h, 6h, 12h, 24h) → aplicação em alerta hidrológico.
+
+        4. **Avaliar** simulação contínua de séries horárias → aplicação
+           em disponibilidade hídrica e outorga.
+        """
+    )
+
+with o2:
+    st.markdown(
+        """
+        ##### Diagnóstico + Fase 2
+
+        5. **Investigar** a contribuição de cada módulo via **ablação
+           sistemática** (10 configurações) — isolar o peso do TTD,
+           do SCS-CN e da LSTM.
+
+        6. **Testar** as hipóteses **H1–H5** (distribuído vs concentrado,
+           aprendível vs fixo, com vs sem física).
+
+        7. **Comparar** com *baselines* — LSTM puro, modelo puramente
+           físico e variantes ablacionadas — para quantificar o ganho
+           efetivo da abordagem diferenciável.
+
+        8. **Avaliar generalização espacial** (**Fase 2**) em
+           ~100 bacias brasileiras, demonstrando viabilidade em
+           bacias não monitoradas.
+        """
+    )
+
+st.caption(
+    "📌 Os 4 primeiros objetivos foram cumpridos na Fase 1 (resultados "
+    "nesta apresentação). Os objetivos 5–7 sustentam o diagnóstico da "
+    "Fase 1 (ablação). O objetivo 8 é o escopo da Fase 2 — próximos "
+    "14 meses, até a defesa de tese."
+)
+
+st.divider()
+
 st.markdown(
     """
     #### O que vem a seguir nesta apresentação
