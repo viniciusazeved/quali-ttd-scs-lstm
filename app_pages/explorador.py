@@ -11,6 +11,9 @@ from plotly.subplots import make_subplots
 
 import data_loader as dl
 from plots import COLORS, plot_hydrograph
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Explorador de hidrogramas")
 st.caption(

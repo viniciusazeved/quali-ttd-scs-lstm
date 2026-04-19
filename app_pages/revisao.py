@@ -7,6 +7,9 @@ temporais, modelos diferenciaveis, e restricoes fisicas.
 from __future__ import annotations
 
 import streamlit as st
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Revisão bibliográfica")
 st.caption(

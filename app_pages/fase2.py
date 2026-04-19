@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import plotly.graph_objects as go
 import streamlit as st
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Próximos passos — Fase 2")
 st.caption(

@@ -10,10 +10,13 @@ import streamlit as st
 
 import data_loader as dl
 from plots import plot_nse_ranking
+from embed_mode import maybe_hide_chrome
 
 # ---------------------------------------------------------------------------
 # Capa
 # ---------------------------------------------------------------------------
+maybe_hide_chrome()
+
 st.markdown(
     """
     <div style="padding: 2rem 1rem 1rem 1rem;">

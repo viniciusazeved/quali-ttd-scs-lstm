@@ -10,6 +10,7 @@ import streamlit as st
 
 import data_loader as dl
 from plots import (
+from embed_mode import maybe_hide_chrome
     COLORS,
     plot_availability_heatmap,
     plot_flow_duration_curve,
@@ -17,6 +18,8 @@ from plots import (
     plot_monthly_boxplot,
     plot_precip_timeseries,
 )
+
+maybe_hide_chrome()
 
 st.title("Dados de entrada")
 st.caption(

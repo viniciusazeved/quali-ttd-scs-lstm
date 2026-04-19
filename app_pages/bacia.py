@@ -10,9 +10,12 @@ from streamlit_folium import st_folium
 
 import data_loader as dl
 from plots import (
+from embed_mode import maybe_hide_chrome
     plot_ottobacia_attr_histogram,
     plot_ottobacia_scatter,
 )
+
+maybe_hide_chrome()
 
 st.title("Bacia do Rio Preto — até Manuel Duarte (58585000)")
 st.caption(

@@ -15,6 +15,9 @@ import streamlit as st
 
 import stations as ana
 from plots import plot_ana_by_state, plot_ana_nyd_distribution
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Monitoramento convencional da ANA")
 st.caption(

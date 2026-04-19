@@ -6,6 +6,9 @@ from __future__ import annotations
 import streamlit as st
 
 import data_loader as dl
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Conclusões")
 st.caption(

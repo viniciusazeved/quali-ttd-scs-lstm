@@ -16,6 +16,9 @@ import pydeck as pdk
 import streamlit as st
 
 import stations as ana
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Monitoramento telemetrico da ANA")
 st.caption(

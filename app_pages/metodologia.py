@@ -11,6 +11,8 @@ import streamlit as st
 
 from plots import plot_iuh
 
+maybe_hide_chrome()
+
 st.title("Metodologia — arquitetura hidrológica diferenciável")
 st.caption(
     "Modelo TTD-SCS-LSTM: três módulos integrados em uma arquitetura treinada "
@@ -272,6 +274,7 @@ with tab_ttd:
 
     # --- Fluxograma visual
     import plotly.graph_objects as go
+from embed_mode import maybe_hide_chrome
 
     steps = [
         ("**DEM ANADEM**\n30 m, correção<br>de viés de vegetação", "#1e3a8a"),

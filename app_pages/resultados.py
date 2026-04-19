@@ -10,6 +10,7 @@ import streamlit as st
 
 import data_loader as dl
 from plots import (
+from embed_mode import maybe_hide_chrome
     COLORS,
     PALETTE,
     plot_hydrograph,
@@ -17,6 +18,8 @@ from plots import (
     plot_nse_ranking,
     plot_tradeoff,
 )
+
+maybe_hide_chrome()
 
 st.title("Resultados — estudo comparativo dos 10 modelos")
 st.caption(

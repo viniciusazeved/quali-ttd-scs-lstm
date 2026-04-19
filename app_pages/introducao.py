@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import plotly.graph_objects as go
 import streamlit as st
+from embed_mode import maybe_hide_chrome
+
+maybe_hide_chrome()
 
 st.title("Introdução — o problema das bacias não monitoradas")
 st.caption("Capítulo 1 da qualificação · Contexto e motivação operacional")
