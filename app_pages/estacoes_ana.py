@@ -188,29 +188,63 @@ df["color"] = df["quality_label"].astype(str).map(
     lambda q: _hex_to_rgb(_Q_COLORS.get(q, "#dc2626"))
 )
 
-# Destaque Manuel Duarte (58585000)
+# Separar Manuel Duarte para layer proprio acima dos demais
 df["radius"] = 4000
 is_md = df["Code"] == "58585000"
-df.loc[is_md, "radius"] = 30000
+df_base = df[~is_md].copy()
+df_md = df[is_md].copy()
 
 # Tooltip precisa de strings
-df["_start"] = df["StartDate"].dt.strftime("%Y-%m-%d").fillna("?")
-df["_end"] = df["EndDate"].dt.strftime("%Y-%m-%d").fillna("?")
+for subset in (df_base, df_md):
+    subset["_start"] = subset["StartDate"].dt.strftime("%Y-%m-%d").fillna("?")
+    subset["_end"] = subset["EndDate"].dt.strftime("%Y-%m-%d").fillna("?")
 
-layers = [pdk.Layer(
-    "ScatterplotLayer",
-    data=df,
-    get_position=["Longitude", "Latitude"],
-    get_color="color",
-    get_radius="radius",
-    radius_min_pixels=3,
-    radius_max_pixels=10,
-    pickable=True,
-    opacity=0.85,
-    stroked=True,
-    filled=True,
-    line_width_min_pixels=0.5,
-)]
+layers = [
+    pdk.Layer(
+        "ScatterplotLayer",
+        data=df_base,
+        get_position=["Longitude", "Latitude"],
+        get_fill_color="color",
+        get_radius="radius",
+        radius_min_pixels=3,
+        radius_max_pixels=10,
+        pickable=True,
+        opacity=0.85,
+        stroked=True,
+        filled=True,
+        line_width_min_pixels=0.5,
+    ),
+    # Halo externo ao redor de Manuel Duarte (anel amarelo, sem fill)
+    pdk.Layer(
+        "ScatterplotLayer",
+        data=df_md,
+        get_position=["Longitude", "Latitude"],
+        get_fill_color=[0, 0, 0, 0],
+        get_line_color=[234, 179, 8, 220],  # amarelo
+        get_radius=70000,
+        radius_min_pixels=18,
+        radius_max_pixels=28,
+        stroked=True,
+        filled=False,
+        line_width_min_pixels=3,
+        pickable=False,
+    ),
+    # Ponto destacado de Manuel Duarte (por cima de tudo)
+    pdk.Layer(
+        "ScatterplotLayer",
+        data=df_md,
+        get_position=["Longitude", "Latitude"],
+        get_fill_color=[234, 179, 8, 255],  # amarelo vivo
+        get_line_color=[0, 0, 0, 255],
+        get_radius=42000,
+        radius_min_pixels=10,
+        radius_max_pixels=16,
+        stroked=True,
+        filled=True,
+        line_width_min_pixels=2,
+        pickable=True,
+    ),
+]
 
 view = pdk.ViewState(latitude=-14.2, longitude=-51.9, zoom=3.5, pitch=0)
 
@@ -244,8 +278,10 @@ with col_leg:
         <span style="color:#f59e0b;">●</span> Moderada<br>
         <span style="color:#dc2626;">●</span> Limitada<br>
         <br>
-        <b>★ Destacada</b><br>
-        58585000 — Manuel Duarte<br>(bacia do estudo)
+        <b>Destacada</b><br>
+        <span style="color:#eab308; font-size: 1.3em;">◉</span>
+        58585000<br>Manuel Duarte<br>
+        <small>(bacia do estudo)</small>
         </div>
         """,
         unsafe_allow_html=True,
