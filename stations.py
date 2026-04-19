@@ -1,12 +1,20 @@
 """
-Catalogo de estacoes fluviometricas da ANA (ANAF_flow_stations via hydrobr).
+Catalogo de estacoes fluviometricas da ANA.
 
-Fonte: Carvalho & Braga (2020) - https://doi.org/10.5281/zenodo.3755065
+Convencionais (vazao diaria) — ANAF via hydrobr:
+  Carvalho & Braga (2020) — https://doi.org/10.5281/zenodo.3755065
+
+Telemetricas (vazao horaria) — HidroInventario/ANA:
+  http://telemetriaws1.ana.gov.br/ServiceANA.asmx/HidroInventario
+  (snapshot local em data/estacoes/ — regenerar com
+   Apresentacao/shp/_export_shapes.py)
 """
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 
+import geopandas as gpd
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -15,6 +23,8 @@ _ANAF_FLOW_URL = (
     "https://raw.githubusercontent.com/wallissoncarvalho/hydrobr/"
     "master/hydrobr/resources/ANAF_flow_stations.csv"
 )
+
+_STATIONS_DIR = Path(__file__).parent / "data" / "estacoes"
 
 # Estados estrangeiros que aparecem no ANAF (o catalogo inclui estacoes de
 # paises vizinhos da bacia amazonica — filtradas para o app).
@@ -101,3 +111,67 @@ def get_responsibles(catalog: pd.DataFrame) -> list[str]:
 
 def get_sub_basins(catalog: pd.DataFrame) -> list[int]:
     return sorted(catalog["SubBasin"].dropna().unique().astype(int))
+
+
+# ---------------------------------------------------------------------------
+# Shapes locais (convencionais + telemetricas) — gerados em
+# Apresentacao/shp/_export_shapes.py e copiados para data/estacoes/
+# ---------------------------------------------------------------------------
+@st.cache_data(ttl=3600, show_spinner="Carregando estacoes convencionais...")
+def load_convencionais(only_ana: bool = False) -> pd.DataFrame:
+    """
+    Carrega shapefile local de estacoes fluviometricas convencionais
+    (vazao diaria, leitura manual em regua ou linigrafo).
+
+    Fonte: catalogo ANAF (Carvalho & Braga, 2020) — snapshot 03/2020.
+
+    Parameters
+    ----------
+    only_ana : bool
+        Se True, retorna apenas estacoes com Responsible='ANA' (RHN pura).
+    """
+    fname = "estacoes_convencionais_ana.shp" if only_ana else "estacoes_convencionais_todas.shp"
+    gdf = gpd.read_file(_STATIONS_DIR / fname)
+    gdf["StartDate"] = pd.to_datetime(gdf["StartDate"], errors="coerce")
+    gdf["EndDate"] = pd.to_datetime(gdf["EndDate"], errors="coerce")
+    # renomear de volta p/ nomes longos do ANAF
+    gdf = gdf.rename(columns={
+        "DrainArea": "DrainageArea",
+        "Responsib": "Responsible",
+        "QScore": "quality_score",
+        "QLabel": "quality_label",
+    })
+    return pd.DataFrame(gdf.drop(columns="geometry"))
+
+
+@st.cache_data(ttl=3600, show_spinner="Carregando estacoes telemetricas...")
+def load_telemetricas(only_ana: bool = False) -> pd.DataFrame:
+    """
+    Carrega shapefile local de estacoes fluviometricas telemetricas
+    (vazao horaria/sub-horaria, transmissao automatica).
+
+    Fonte: ANA/HidroInventario — consulta em 04/2026, filtro
+    tpEst=1 (fluviometrica) + telemetrica=1.
+
+    Parameters
+    ----------
+    only_ana : bool
+        Se True, retorna apenas estacoes da RHN (Origem='RHN').
+    """
+    fname = "estacoes_telemetricas_ana.shp" if only_ana else "estacoes_telemetricas_todas.shp"
+    gdf = gpd.read_file(_STATIONS_DIR / fname)
+    gdf["StartDate"] = pd.to_datetime(gdf["StartDate"], errors="coerce")
+    gdf["EndDate"] = pd.to_datetime(gdf["EndDate"], errors="coerce")
+    gdf = gdf.rename(columns={
+        "DrainArea": "DrainageArea",
+        "Responsib": "Responsible",
+    })
+    return pd.DataFrame(gdf.drop(columns="geometry"))
+
+
+def get_origens(df: pd.DataFrame) -> list[str]:
+    return sorted(df["Origem"].dropna().unique().tolist())
+
+
+def get_status(df: pd.DataFrame) -> list[str]:
+    return sorted(df["Status"].dropna().unique().tolist())

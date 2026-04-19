@@ -1,9 +1,10 @@
 """
-Pagina de contexto — estacoes fluviometricas ANA em todo o Brasil.
+Pagina de contexto — estacoes fluviometricas CONVENCIONAIS da ANA no Brasil.
 
-Mapa pydeck com ~5k+ estacoes do catalogo ANAF, coloridas por scoring de
-qualidade. Serve de motivacao para a introducao: apesar da rede densa,
-dados horarios e telemetricos sao escassos.
+Convencional = leitura diaria em regua/linigrafo, registro manual.
+Serve como ponto de partida da narrativa: apesar da rede densa, a operacao
+convencional fornece apenas vazao DIARIA, incompativel com modelagem de
+eventos de cheia e previsao horaria.
 """
 from __future__ import annotations
 
@@ -19,37 +20,54 @@ from plots import plot_ana_by_state, plot_ana_nyd_distribution, plot_ana_quality
 CATALOG_END_YEAR = 2020
 RECENT_YEARS = 5  # janela: últimos 5 anos do catálogo
 
-st.title("Monitoramento fluviométrico da ANA")
+st.title("Monitoramento convencional da ANA")
 st.caption(
-    "Contexto amplo: rede de estações de vazão no território brasileiro "
-    "— catálogo ANAF (Carvalho & Braga, 2020)"
+    "Rede fluviometrica de leitura diaria — catalogo ANAF (Carvalho & Braga, 2020)"
 )
 
 st.markdown(
     """
-    A **ANA** coordena a Rede Hidrometeorológica Nacional (RHN), hoje com
-    cerca de **4.500 estações fluviométricas** distribuídas pelo Brasil.
-    A maioria opera em regime convencional (leitura diária ou
-    horária em planilha), com um subconjunto menor em regime
-    **telemétrico** (transmissão automática em tempo quase-real).
+    A **ANA** coordena a Rede Hidrometeorologica Nacional (RHN), hoje com
+    cerca de **4.500 estacoes fluviometricas** distribuidas pelo Brasil.
+    A maioria opera em **regime convencional**: leitura diaria em regua ou
+    linigrafo, registro manual por observador local, transmissao em lote.
 
-    Este mapa explora o catálogo **ANAF** — subconjunto filtrado com
-    estações que possuem dados efetivamente registrados e disponíveis via
-    HidroWeb. A classificação de qualidade abaixo combina três critérios:
-    duração da série, completude dos dados e recência do último registro.
+    Esta pagina mapeia o **catalogo ANAF** — subconjunto das estacoes
+    fluviometricas com dados efetivamente registrados e disponiveis via
+    HidroWeb. O passo seguinte da narrativa mostra a **subrede telemetrica**,
+    aquela que fornece o dado **horario** exigido pelo modelo TTD-SCS-LSTM.
     """
 )
 
+st.info(
+    "📌 **Convencional = vazao diaria.** O modelo TTD-SCS-LSTM opera em "
+    "passo horario, entao estas estacoes *nao* servem como exutorio para "
+    "treinamento/avaliacao. Servem como contexto da rede total e como "
+    "fonte de longas series historicas (decadas) para estudos de regime."
+)
+
 # ---------------------------------------------------------------------------
-# Carregamento
+# Toggle: todas vs apenas ANA (RHN pura)
 # ---------------------------------------------------------------------------
+recorte = st.radio(
+    "Recorte da rede",
+    options=["Todas as operadoras", "Apenas ANA (gestao federal)"],
+    horizontal=True,
+    help=(
+        "A coluna Responsible do ANAF indica quem responde pela estacao. "
+        "'Apenas ANA' filtra as 2.694 estacoes sob gestao federal direta; "
+        "'Todas' inclui DAEE-SP, COPEL, FURNAS, CPRM-SGB, AGUASPARANA etc."
+    ),
+)
+only_ana = recorte.startswith("Apenas")
+
 try:
-    catalog = ana.load_flow_catalog()
+    catalog = ana.load_convencionais(only_ana=only_ana)
 except Exception as exc:  # noqa: BLE001
-    st.error(f"Não foi possível carregar o catálogo ANAF: {exc}")
+    st.error(f"Nao foi possivel carregar o catalogo convencional: {exc}")
     st.stop()
 
-scored = ana.compute_quality_score(catalog)
+scored = ana.compute_quality_score(catalog) if "quality_score" not in catalog.columns else catalog
 
 # ---------------------------------------------------------------------------
 # Filtros (sidebar)
@@ -101,7 +119,7 @@ if active_only:
 recent_ref = pd.Timestamp(year=CATALOG_END_YEAR - RECENT_YEARS, month=1, day=1)
 
 k1, k2, k3, k4 = st.columns(4)
-k1.metric("Estações no catálogo", f"{len(scored):,}".replace(",", "."))
+k1.metric("Estações no recorte", f"{len(scored):,}".replace(",", "."))
 k2.metric("Exibidas após filtros", f"{len(df):,}".replace(",", "."))
 k3.metric(
     "Qualidade Excelente",
@@ -282,21 +300,24 @@ st.dataframe(
 csv = df[display_cols].to_csv(index=False).encode("utf-8")
 st.download_button(
     "Baixar seleção (CSV)", csv,
-    file_name="estacoes_ana_filtradas.csv",
+    file_name="estacoes_convencionais_filtradas.csv",
     mime="text/csv",
 )
 
 st.divider()
 st.markdown(
     """
-    **Fonte do catálogo:** Carvalho, W. A., & Braga, A. S. (2020).
-    *HydroBR: A Python package for hydrometeorological data acquisition from
-    Brazilian databases*. Zenodo. [doi:10.5281/zenodo.3755065](https://doi.org/10.5281/zenodo.3755065)
+    **Fontes dos dados:**
+    - Catalogo ANAF: Carvalho, W. A., & Braga, A. S. (2020). *HydroBR: A Python
+      package for hydrometeorological data acquisition from Brazilian databases*.
+      Zenodo. [doi:10.5281/zenodo.3755065](https://doi.org/10.5281/zenodo.3755065)
+    - Rede ANA: Agencia Nacional de Aguas e Saneamento Basico, Rede
+      Hidrometeorologica Nacional (RHN), [www.gov.br/ana](https://www.gov.br/ana).
 
-    **Nota metodológica:** a classificação por qualidade combina três
+    **Nota metodologica:** a classificacao por qualidade combina tres
     componentes — 50% anos de dados (saturando em 40), 30% completude
-    (1 - falhas%, saturando em 50%) e 20% recência (anos desde o último
-    registro, saturando em 20). As classes são *Excelente* (≥ 0,75),
+    (1 - falhas%, saturando em 50%) e 20% recencia (anos desde o ultimo
+    registro, saturando em 20). As classes sao *Excelente* (≥ 0,75),
     *Moderada* (0,50 – 0,75) e *Limitada* (< 0,50).
     """
 )

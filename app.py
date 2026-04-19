@@ -121,27 +121,28 @@ pages = {
     ],
     "Contexto e Motivação": [
         st.Page("app_pages/introducao.py", title="2. Introdução — o problema PUB", icon="💡"),
-        st.Page("app_pages/estacoes_ana.py", title="3. Monitoramento ANA", icon="🗺️"),
-        st.Page("app_pages/trajetoria.py", title="4. Trajetória da pesquisa", icon="🧭"),
+        st.Page("app_pages/estacoes_ana.py", title="3. Monitoramento convencional", icon="🗺️"),
+        st.Page("app_pages/estacoes_telemetricas.py", title="4. Monitoramento telemétrico", icon="📡"),
+        st.Page("app_pages/trajetoria.py", title="5. Trajetória da pesquisa", icon="🧭"),
     ],
     "Fundamentação": [
-        st.Page("app_pages/revisao.py", title="5. Revisão bibliográfica", icon="📚"),
+        st.Page("app_pages/revisao.py", title="6. Revisão bibliográfica", icon="📚"),
     ],
     "Área de Estudo & Dados": [
-        st.Page("app_pages/bacia.py", title="6. Bacia do Rio Preto", icon="🌿"),
-        st.Page("app_pages/dados.py", title="7. Dados", icon="📊"),
+        st.Page("app_pages/bacia.py", title="7. Bacia do Rio Preto", icon="🌿"),
+        st.Page("app_pages/dados.py", title="8. Dados", icon="📊"),
     ],
     "Modelo Proposto": [
-        st.Page("app_pages/metodologia.py", title="8. Metodologia", icon="⚙️"),
+        st.Page("app_pages/metodologia.py", title="9. Metodologia", icon="⚙️"),
     ],
     "Resultados (Fase 1)": [
-        st.Page("app_pages/resultados.py", title="9. Ablação & Trade-off", icon="📈"),
-        st.Page("app_pages/explorador.py", title="10. Explorar hidrogramas", icon="🔍"),
-        st.Page("app_pages/hiperparametros.py", title="11. Hiperparâmetros", icon="🧪"),
+        st.Page("app_pages/resultados.py", title="10. Ablação & Trade-off", icon="📈"),
+        st.Page("app_pages/explorador.py", title="11. Explorar hidrogramas", icon="🔍"),
+        st.Page("app_pages/hiperparametros.py", title="12. Hiperparâmetros", icon="🧪"),
     ],
     "Próximos Passos": [
-        st.Page("app_pages/fase2.py", title="12. Fase 2 & Cronograma", icon="🚀"),
-        st.Page("app_pages/conclusoes.py", title="13. Conclusões", icon="🎯"),
+        st.Page("app_pages/fase2.py", title="13. Fase 2 & Cronograma", icon="🚀"),
+        st.Page("app_pages/conclusoes.py", title="14. Conclusões", icon="🎯"),
     ],
 }
 
