@@ -9,16 +9,12 @@ eventos de cheia e previsao horaria.
 from __future__ import annotations
 
 import pandas as pd
+import plotly.express as px
 import pydeck as pdk
 import streamlit as st
 
 import stations as ana
-from plots import plot_ana_by_state, plot_ana_nyd_distribution, plot_ana_quality_pie
-
-# Data de referência para "estações recentes" = último ano presente no catálogo.
-# O ANAF foi compilado em março/2020; usar datetime.now() daria zero.
-CATALOG_END_YEAR = 2020
-RECENT_YEARS = 5  # janela: últimos 5 anos do catálogo
+from plots import plot_ana_by_state, plot_ana_nyd_distribution
 
 st.title("Monitoramento convencional da ANA")
 st.caption(
@@ -62,12 +58,10 @@ recorte = st.radio(
 only_ana = recorte.startswith("Apenas")
 
 try:
-    catalog = ana.load_convencionais(only_ana=only_ana)
+    scored = ana.load_convencionais(only_ana=only_ana)
 except Exception as exc:  # noqa: BLE001
     st.error(f"Nao foi possivel carregar o catalogo convencional: {exc}")
     st.stop()
-
-scored = ana.compute_quality_score(catalog) if "quality_score" not in catalog.columns else catalog
 
 # ---------------------------------------------------------------------------
 # Filtros (sidebar)
@@ -85,21 +79,6 @@ resp_sel = st.sidebar.multiselect(
     "Operador (vazio = todos)", responsibles, default=[],
 )
 
-quality_sel = st.sidebar.multiselect(
-    "Qualidade", ["Excelente", "Moderada", "Limitada"],
-    default=["Excelente", "Moderada", "Limitada"],
-)
-
-active_only = st.sidebar.checkbox(
-    f"Apenas estações com registro recente (≥ {CATALOG_END_YEAR - RECENT_YEARS})",
-    False,
-    help=(
-        f"O catálogo ANAF foi compilado em março/{CATALOG_END_YEAR}; usamos "
-        f"os últimos {RECENT_YEARS} anos do catálogo ({CATALOG_END_YEAR - RECENT_YEARS}"
-        f"–{CATALOG_END_YEAR}) como critério de recência."
-    ),
-)
-
 # Aplica filtros
 df = scored.dropna(subset=["Latitude", "Longitude"]).copy()
 df = df[df["NYD"].fillna(0) >= min_years]
@@ -107,71 +86,28 @@ if ufs_sel:
     df = df[df["State"].isin(ufs_sel)]
 if resp_sel:
     df = df[df["Responsible"].isin(resp_sel)]
-if quality_sel:
-    df = df[df["quality_label"].astype(str).isin(quality_sel)]
-if active_only:
-    ref = pd.Timestamp(year=CATALOG_END_YEAR - RECENT_YEARS, month=1, day=1)
-    df = df[df["EndDate"] >= ref]
 
 # ---------------------------------------------------------------------------
 # KPIs
 # ---------------------------------------------------------------------------
-recent_ref = pd.Timestamp(year=CATALOG_END_YEAR - RECENT_YEARS, month=1, day=1)
+n_ana = int((scored["Responsible"] == "ANA").sum())
+n_outros = int((scored["Responsible"] != "ANA").sum())
 
 k1, k2, k3, k4 = st.columns(4)
 k1.metric("Estações no recorte", f"{len(scored):,}".replace(",", "."))
 k2.metric("Exibidas após filtros", f"{len(df):,}".replace(",", "."))
 k3.metric(
-    "Qualidade Excelente",
-    f"{(scored['quality_label'] == 'Excelente').sum():,}".replace(",", "."),
+    "Operadas pela ANA",
+    f"{n_ana:,}".replace(",", "."),
+    help="Estações com Responsible=ANA no catálogo ANAF — rede pública federal.",
 )
 k4.metric(
-    f"Recentes ({CATALOG_END_YEAR - RECENT_YEARS}–{CATALOG_END_YEAR})",
-    f"{(scored['EndDate'] >= recent_ref).sum():,}".replace(",", "."),
-    help=f"Com registro ≥ {CATALOG_END_YEAR - RECENT_YEARS}, pelo catálogo ANAF (congelado em 03/{CATALOG_END_YEAR}).",
-)
-
-# --- Classificação de qualidade explicada em destaque
-st.markdown("#### Classificação de qualidade das estações")
-q1, q2, q3 = st.columns(3)
-with q1:
-    st.markdown(
-        """
-        <div style="border-left: 4px solid #16a34a; padding: 8px 14px; background: #f0fdf4;">
-        <b style="color:#16a34a;">● Excelente</b> &nbsp; <i>score ≥ 0,75</i><br>
-        <small>Longa série, poucas falhas e dados recentes. Ideal para
-        calibração e validação rigorosa.</small>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-with q2:
-    st.markdown(
-        """
-        <div style="border-left: 4px solid #f59e0b; padding: 8px 14px; background: #fffbeb;">
-        <b style="color:#b45309;">● Moderada</b> &nbsp; <i>0,50 – 0,75</i><br>
-        <small>Dados razoáveis com limitações em algum critério. Uso com
-        cuidado — verificar período e falhas.</small>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-with q3:
-    st.markdown(
-        """
-        <div style="border-left: 4px solid #dc2626; padding: 8px 14px; background: #fef2f2;">
-        <b style="color:#dc2626;">● Limitada</b> &nbsp; <i>score < 0,50</i><br>
-        <small>Séries curtas, muitas falhas ou dados antigos. Usar com
-        cautela; pode não ser adequada para calibração.</small>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
-
-st.caption(
-    "Score composto: **50%** anos de dados (satura em 40 anos) · **30%** "
-    "completude (1 − falhas%, satura em 50%) · **20%** recência (anos "
-    "desde o último registro, satura em 20). Detalhes no rodapé."
+    "Demais operadoras",
+    f"{n_outros:,}".replace(",", "."),
+    help=(
+        "Estaduais (DAEE-SP, IGAM-MG, INEA-RJ), concessionárias (COPEL, "
+        "FURNAS, CEMIG) e outros agentes reguladores/operadores."
+    ),
 )
 
 # ---------------------------------------------------------------------------
@@ -183,9 +119,11 @@ def _hex_to_rgb(h: str) -> list[int]:
     h = h.lstrip("#")
     return [int(h[i:i + 2], 16) for i in (0, 2, 4)]
 
-_Q_COLORS = {"Excelente": "#16a34a", "Moderada": "#f59e0b", "Limitada": "#dc2626"}
-df["color"] = df["quality_label"].astype(str).map(
-    lambda q: _hex_to_rgb(_Q_COLORS.get(q, "#dc2626"))
+# Cores: ANA (rede publica federal) vs demais operadoras
+_COLOR_ANA = _hex_to_rgb("#2563eb")         # azul — ANA
+_COLOR_OUTROS = _hex_to_rgb("#737373")      # cinza — demais operadoras
+df["color"] = df["Responsible"].map(
+    lambda r: _COLOR_ANA if r == "ANA" else _COLOR_OUTROS
 )
 
 # Separar Manuel Duarte para layer proprio acima dos demais
@@ -255,11 +193,10 @@ deck = pdk.Deck(
         "html": (
             "<b>{Code} — {Name}</b><br/>"
             "{City}, {State}<br/>"
-            "Operador: {Responsible}<br/>"
+            "Operador: <b>{Responsible}</b><br/>"
             "Área de drenagem: {DrainageArea} km²<br/>"
             "Período: {_start} a {_end}<br/>"
-            "Anos: {NYD} | Falhas: {MD}%<br/>"
-            "Qualidade: <b>{quality_label}</b>"
+            "Anos de dados: {NYD} | Falhas: {MD}%"
         ),
         "style": {"fontSize": "12px"},
     },
@@ -273,10 +210,9 @@ with col_leg:
     st.markdown(
         """
         <div style="padding-top:50px; font-size:13px; line-height:2;">
-        <b>Qualidade</b><br>
-        <span style="color:#16a34a;">●</span> Excelente<br>
-        <span style="color:#f59e0b;">●</span> Moderada<br>
-        <span style="color:#dc2626;">●</span> Limitada<br>
+        <b>Operadora</b><br>
+        <span style="color:#2563eb;">●</span> ANA<br>
+        <span style="color:#737373;">●</span> Outras<br>
         <br>
         <b>Destacada</b><br>
         <span style="color:#eab308; font-size: 1.3em;">◉</span>
@@ -291,9 +227,22 @@ with col_leg:
 # Estatisticas gerais
 # ---------------------------------------------------------------------------
 st.subheader("Estatísticas gerais")
+
 c1, c2 = st.columns(2)
 with c1:
-    st.plotly_chart(plot_ana_quality_pie(scored), use_container_width=True)
+    # ANA vs demais operadoras
+    cat = scored["Responsible"].where(scored["Responsible"] == "ANA", "Outras")
+    counts = cat.value_counts()
+    fig_pie = px.pie(
+        values=counts.values,
+        names=counts.index,
+        color=counts.index,
+        color_discrete_map={"ANA": "#2563eb", "Outras": "#737373"},
+        title="ANA vs demais operadoras",
+        hole=0.5,
+    )
+    fig_pie.update_layout(template="plotly_white", height=400)
+    st.plotly_chart(fig_pie, use_container_width=True)
 with c2:
     st.plotly_chart(plot_ana_by_state(scored), use_container_width=True)
 
@@ -311,7 +260,6 @@ st.caption(
 display_cols = [
     "Code", "Name", "City", "State", "Responsible",
     "DrainageArea", "StartDate", "EndDate", "NYD", "MD",
-    "quality_label", "quality_score",
 ]
 st.dataframe(
     df[display_cols].rename(columns={
@@ -320,12 +268,10 @@ st.dataframe(
         "DrainageArea": "Área drenagem (km²)",
         "StartDate": "Início", "EndDate": "Fim",
         "NYD": "Anos", "MD": "Falhas (%)",
-        "quality_label": "Qualidade", "quality_score": "Score",
     }).style.format({
         "Área drenagem (km²)": "{:,.0f}",
         "Anos": "{:.0f}",
         "Falhas (%)": "{:.1f}",
-        "Score": "{:.2f}",
         "Início": "{:%Y-%m-%d}",
         "Fim": "{:%Y-%m-%d}",
     }, na_rep="—"),
@@ -350,10 +296,10 @@ st.markdown(
     - Rede ANA: Agencia Nacional de Aguas e Saneamento Basico, Rede
       Hidrometeorologica Nacional (RHN), [www.gov.br/ana](https://www.gov.br/ana).
 
-    **Nota metodologica:** a classificacao por qualidade combina tres
-    componentes — 50% anos de dados (saturando em 40), 30% completude
-    (1 - falhas%, saturando em 50%) e 20% recencia (anos desde o ultimo
-    registro, saturando em 20). As classes sao *Excelente* (≥ 0,75),
-    *Moderada* (0,50 – 0,75) e *Limitada* (< 0,50).
+    **Nota:** o catalogo ANAF foi compilado em marco/2020 e reune as estacoes
+    fluviometricas com dados registrados e disponiveis via HidroWeb naquela
+    data. O campo *Operador* indica quem responde pela estacao — nem sempre
+    quem a opera em campo (ex.: estacoes ANA sao frequentemente operadas
+    pelo Servico Geologico do Brasil, CPRM-SGB).
     """
 )
